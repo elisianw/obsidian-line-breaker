@@ -1,6 +1,6 @@
 # Line Breaker
 
-Annoyed of having to repeatedly press enter and backspace all the time? Line breaker plugin will make keeping markdown pretty comfier. One enter press and you’ll be writing the next paragraph, one backspace press and you’ll get rid of trailing spaces.
+Annoyed of having to repeatedly press enter and backspace all the time? Line Breaker plugin will make keeping markdown pretty comfier. One enter press and you’ll be writing the next paragraph, one backspace press and you’ll get rid of trailing spaces.
 
 ## Features
 
@@ -21,3 +21,8 @@ Annoyed of having to repeatedly press enter and backspace all the time? Line bre
     - Beginning of any block if there are no blank lines above then joins the above and below line separating them with a space but removing any other spaces or tabs if any.
 - Shift + Backspace
     - Obsidian default backspace behavior.
+
+## Support me!
+
+
+**[Ko-fi](https://ko-fi.com/elisianw)**
