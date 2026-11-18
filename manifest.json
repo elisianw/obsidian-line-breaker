@@ -1,0 +1,9 @@
+{
+  "id": "obsidian-line-breaker",
+  "name": "Line Breaker",
+  "version": "0.1.0",
+  "minAppVersion": "1.4.0",
+  "description": "Enter starts a new paragraph. Backspace removes blank lines.",
+  "author": "Deretard",
+  "isDesktopOnly": false
+}

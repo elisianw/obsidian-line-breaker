@@ -1,0 +1,22 @@
+{
+  "name": "obsidian-line-breaker",
+  "version": "0.1.0",
+  "description": "Enter starts a new paragraph. Backspace removes blank lines.",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "test": "node tests/run.mjs",
+    "check": "npm run build && npm test"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "devDependencies": {
+    "@codemirror/commands": "^6.11.1",
+    "@types/node": "^22.15.17",
+    "esbuild": "0.25.5",
+    "obsidian": "latest",
+    "typescript": "^5.8.3"
+  }
+}
