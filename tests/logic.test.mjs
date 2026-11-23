@@ -66,7 +66,7 @@ test("classifies each block kind", () => {
       "table",
       "code",
       "code",
-      "code",
+      "code-end",
       "math",
       "math",
       "math",
@@ -79,7 +79,7 @@ test("a blank line between two list items belongs to the list", () => {
 });
 
 test("blank lines inside a code block are code", () => {
-  assert.deepEqual(classify(["```", "", "```"]), ["code", "code", "code"]);
+  assert.deepEqual(classify(["```", "", "```"]), ["code", "code", "code-end"]);
 });
 
 // ---------------------------------------------------------------------------
@@ -174,6 +174,18 @@ test("Enter in a fenced code block passes through", () => {
   assert.equal(enter("```\ncode|\n```"), null);
 });
 
+test("Enter at the end of the closing fence of a code block makes two line breaks", () => {
+  assert.equal(enter("```\ncode\n```|"), "```\ncode\n```\n\n|");
+});
+
+test("Enter at the start of the closing fence passes through", () => {
+  assert.equal(enter("|```\ncode\n```"), null);
+});
+
+test("Shift+Enter at the end of the closing fence passes through", () => {
+  assert.equal(enter("```\ncode\n```|", "soft-break"), null);
+});
+
 test("Enter in a math block passes through", () => {
   assert.equal(enter("$$\nx = 1|\n$$"), null);
 });
@@ -247,6 +259,10 @@ test("Backspace on a blank line removes every blank above except the caret line"
   assert.equal(backspace("something\n\n\n|\nsomething"), "something\n|\nsomething");
 });
 
+test("Backspace on a blank line removes the blank lines below it too", () => {
+  assert.equal(backspace("something\n\n|\n\n\nsomething"), "something\n|\nsomething");
+});
+
 test("Backspace on a blank line with one blank above removes it", () => {
   assert.equal(backspace("something\n\n|\nsomething"), "something\n|\nsomething");
 });
@@ -281,6 +297,14 @@ test("Backspace at the start of a block with two blank lines above keeps one", (
 
 test("Backspace at the start of a block with many blank lines above keeps one", () => {
   assert.equal(backspace("something\n\n \t\n\n|body"), "something\n\n|body");
+});
+
+test("Backspace at the start of a block removes spaces after the caret", () => {
+  assert.equal(backspace("something\n\n\n|   body"), "something\n\n|body");
+});
+
+test("Backspace on a blank line joins past whitespace-only lines below", () => {
+  assert.equal(backspace("something\n|\n \t\nsomething"), "something |something");
 });
 
 test("Backspace at the start of a block with one blank above joins with a space", () => {

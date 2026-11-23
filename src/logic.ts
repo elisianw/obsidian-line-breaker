@@ -57,6 +57,7 @@ export type Kind =
   | "footnote"
   | "table"
   | "code"
+  | "code-end"
   | "math";
 
 const HEADING_RE = /^ {0,3}#{1,6}(?:[ \t]|$)/;
@@ -76,7 +77,7 @@ export function isBlankLine(text: string): boolean {
 
 /** Blocks that the plugin never edits. */
 function isProtected(kind: Kind): boolean {
-  return kind === "code" || kind === "math" || kind === "table";
+  return kind === "code" || kind === "code-end" || kind === "math" || kind === "table";
 }
 
 function blockKind(raw: string): Kind {
@@ -99,8 +100,12 @@ export function classify(lines: string[]): Kind[] {
   for (const raw of lines) {
     if (fence !== null) {
       const close = FENCE_CLOSE_RE.exec(raw);
-      if (close !== null && close[1][0] === fence.char && close[1].length >= fence.len) fence = null;
-      kinds.push("code");
+      if (close !== null && close[1][0] === fence.char && close[1].length >= fence.len) {
+        fence = null;
+        kinds.push("code-end");
+      } else {
+        kinds.push("code");
+      }
       continue;
     }
     if (math) {
@@ -196,6 +201,12 @@ export function applyEnter(lines: string[], line: number, ch: number, action: En
 
   const kind = classify(lines)[line];
 
+  // The closing fence of a code block: Enter at its end works like the end of
+  // a paragraph. Shift+Enter and every other position stay with Obsidian.
+  if (kind === "code-end") {
+    return action === "break" && ch === text.length ? split(lines, line, ch) : null;
+  }
+
   if (action === "soft-break") {
     if (kind === "heading" || kind === "paragraph" || kind === "hr") return "native";
     if (kind === "list" || kind === "quote" || kind === "footnote") return split(lines, line, ch);
@@ -238,10 +249,15 @@ function backspaceOnBlank(lines: string[], kinds: Kind[], line: number, onBlank:
   const k = blanksAbove(lines, kinds, line);
 
   if (k >= 1) {
-    // Remove every blank line above; the caret line stays as the one blank.
+    // Remove every blank line above and, on a blank caret line, every blank
+    // line below it too: the caret line is left as the only blank line.
+    let after = line + 1;
+    if (onBlank) {
+      while (after < lines.length && isBlankLine(lines[after]) && !isProtected(kinds[after])) after++;
+    }
     const kept = onBlank ? "" : lines[line];
     return {
-      lines: [...lines.slice(0, line - k), kept, ...lines.slice(line + 1)],
+      lines: [...lines.slice(0, line - k), kept, ...lines.slice(after)],
       line: line - k,
       ch: 0,
     };
@@ -249,11 +265,12 @@ function backspaceOnBlank(lines: string[], kinds: Kind[], line: number, onBlank:
 
   // No blank above: join the text above with the text below.
   // A horizontal rule at the caret counts as an empty line, so it is replaced.
+  // Blank or whitespace-only lines below the caret are removed by the join.
   const above = line - 1;
-  const below = line + 1;
+  let below = line + 1;
+  while (below < lines.length && isBlankLine(lines[below])) below++;
   if (below >= lines.length) return null;
-  if (!hasText(lines[above]) || isBlankLine(lines[below])) return null;
-  if (isProtected(kinds[above]) || isProtected(kinds[below])) return null;
+  if (!hasText(lines[above]) || isProtected(kinds[above]) || isProtected(kinds[below])) return null;
   return join(lines, above, below);
 }
 
@@ -263,7 +280,8 @@ function backspaceAtBlockStart(lines: string[], kinds: Kind[], line: number): Cu
   if (k >= 2) {
     // Keep the blank line nearest to the block, remove the rest.
     return {
-      lines: [...lines.slice(0, line - k), "", ...lines.slice(line)],
+      // Spaces and tabs after the caret go too.
+      lines: [...lines.slice(0, line - k), "", lines[line].replace(/^[ \t]+/, ""), ...lines.slice(line + 1)],
       line: line - k + 1,
       ch: 0,
     };

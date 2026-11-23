@@ -8,6 +8,7 @@ Annoyed of having to repeatedly press enter and backspace all the time? Line Bre
     - Begin / End of H, P, HR: makes two line breaks.
     - In the middle of H or P: breaks the line in two adding one blank line above and below removing spaces or tabs before or after the caret.
     - In a blank line between any kind of blocks (except it only has space or tabs) it makes a blank line above and below.
+    - End of the closing fence of a code block: two line breaks, like a paragraph.
     - It ignores: Lists, quotes, callouts, footnotes, code blocks, math blocks, tables.
 - Shift + Enter
     - Begin / End of H, P, HR: Obsidian default enter behavior.
