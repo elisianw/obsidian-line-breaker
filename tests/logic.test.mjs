@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { applyEnter, applyBackspace, classify } from "../src/logic.ts";
+import { applyEnter, applyBackspace, applyDelete, classify } from "../src/logic.ts";
 
 /** Input uses "|" for the caret; it must appear once. */
 function parse(input) {
@@ -17,6 +17,12 @@ function show(cur) {
   return cur.lines
     .map((l, i) => (i === cur.line ? l.slice(0, cur.ch) + "|" + l.slice(cur.ch) : l))
     .join("\n");
+}
+
+function del(input) {
+  const { lines, line, ch } = parse(input);
+  const r = applyDelete(lines, line, ch);
+  return r === null ? null : show(r);
 }
 
 function enter(input, action = "break") {
@@ -341,4 +347,48 @@ test("Backspace at the start of a rule with no blank above joins the lines", () 
 
 test("Backspace inside a rule passes through", () => {
   assert.equal(backspace("text\n-|--\nmore"), null);
+});
+
+// ---------------------------------------------------------------------------
+// Delete (forward)
+// ---------------------------------------------------------------------------
+
+test("Delete on a blank line removes blank lines above, like Backspace", () => {
+  assert.equal(del("something\n\n\n|\nsomething"), "something\n|\nsomething");
+});
+
+test("Delete on a blank line between text joins the text with a space", () => {
+  assert.equal(del("something\n|\nsomething"), "something |something");
+});
+
+test("Delete at the end of a text line joins the line below with a space", () => {
+  assert.equal(del("something|\nsomething"), "something |something");
+});
+
+test("Delete at the end of a text line joins past blank lines below", () => {
+  assert.equal(del("something|\n\n\nsomething"), "something |something");
+});
+
+test("Delete at the end of a text line removes spaces and tabs around the join", () => {
+  assert.equal(del("something \t|\n  \tsomething"), "something |something");
+});
+
+test("Delete in the middle of a line passes through", () => {
+  assert.equal(del("some|thing\nnext"), null);
+});
+
+test("Delete at the end of the last line passes through", () => {
+  assert.equal(del("something|"), null);
+});
+
+test("Delete at the end of a code line passes through", () => {
+  assert.equal(del("```\ncode|\n```"), null);
+});
+
+test("Delete on a blank line inside a code block passes through", () => {
+  assert.equal(del("```\n|\n```"), null);
+});
+
+test("Delete at the end of a heading joins the paragraph below", () => {
+  assert.equal(del("# Title|\nbody"), "# Title |body");
 });

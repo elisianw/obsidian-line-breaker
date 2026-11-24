@@ -2,7 +2,7 @@ import { Plugin } from "obsidian";
 import { insertNewlineAndIndent } from "@codemirror/commands";
 import { Prec } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
-import { applyBackspace, applyEnter, Cursor, EnterAction } from "./logic";
+import { applyBackspace, applyDelete, applyEnter, Cursor, EnterAction } from "./logic";
 import { DEFAULT_SETTINGS, LineBreakerSettings, LineBreakerSettingTab } from "./settings";
 import { diffText, offsetOf } from "./text";
 
@@ -27,6 +27,8 @@ export default class LineBreakerPlugin extends Plugin {
           { key: "Enter", run: (view) => this.onEnter(view, "break") },
           { key: "Shift-Enter", run: (view) => this.onEnter(view, "soft-break") },
           { key: "Backspace", run: (view) => this.onBackspace(view) },
+          { key: "Delete", run: (view) => this.onDelete(view) },
+          { key: "Shift-Delete", run: (view) => this.onDelete(view) },
         ]),
       ),
     ]);
@@ -57,6 +59,20 @@ export default class LineBreakerPlugin extends Plugin {
       return true;
     } catch (error) {
       console.error("line-breaker: Backspace failed", error);
+      return false;
+    }
+  }
+
+  private onDelete(view: EditorView): boolean {
+    try {
+      if (!this.canHandle(view)) return false;
+      const caret = this.caret(view);
+      const result = applyDelete(this.lines(view), caret.line, caret.ch);
+      if (result === null) return false;
+      this.apply(view, result);
+      return true;
+    } catch (error) {
+      console.error("line-breaker: Delete failed", error);
       return false;
     }
   }

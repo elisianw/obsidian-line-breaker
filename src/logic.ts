@@ -236,6 +236,28 @@ export function applyBackspace(lines: string[], line: number, ch: number): Curso
   return backspaceAtBlockStart(lines, kinds, line);
 }
 
+/**
+ * Delete (forward) at `line:ch`.
+ *
+ * On an empty line it behaves exactly like Backspace on that line. At the end
+ * of a text line it behaves like Backspace at the start of the line below, so
+ * the two lines are joined with one space. Anywhere else it returns null.
+ */
+export function applyDelete(lines: string[], line: number, ch: number): Cursor | null {
+  if (line < 0 || line >= lines.length) return null;
+  const text = lines[line];
+  if (ch < 0 || ch > text.length) return null;
+
+  if (!hasText(text)) {
+    return applyBackspace(lines, line, 0);
+  }
+
+  if (ch === text.length && line + 1 < lines.length) {
+    return applyBackspace(lines, line + 1, 0);
+  }
+  return null;
+}
+
 /** Blank-run lines directly above `line` that can be edited. */
 function blanksAbove(lines: string[], kinds: Kind[], line: number): number {
   let k = 0;
